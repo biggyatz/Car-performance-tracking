@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+    }
+
+    .form-container {
+      text-align: center;
+      width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-container h2 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .form-container input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+
+    .form-container input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 20px;
+      text-align: center;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .result h3 {
+      color: #333;
+      margin-top: 0;
+    }
+
+    .result p {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>CAR PERFORMANCE</h2>
+    <form id="carForm" action="Result" method="POST">
+      <input type="number" name="cylinders" placeholder="Cylinders" required><br>
+      <input type="number" name="displacement" placeholder="Displacement" required><br>
+      <input type="number" name="horsepower" placeholder="Horsepower" required><br>
+      <input type="number" name="weight" placeholder="Weight" required><br>
+      <input type="number" name="acceleration" placeholder="Acceleration" required><br>
+      <input type="number" name="modelYear" placeholder="Model Year" required><br>
+      <input type="number" name="origin" placeholder="Origin" required><br>
+      <input type="submit" value="Submit">
+    </form>
+    <div class="result">
+      <h3>Result:</h3>
+      <p id="resultText"><b>{{resultText}}</b></p>
+    </div>
+  </div>
+
+</body>
+</html>
