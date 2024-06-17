@@ -1,8 +1,8 @@
-### Car performance tracking deployment into the 
+### Car performance tracking deployment into AWS
 ### Software and tool requirements
 1. [github]
 2. [vscodeIDE]
-3. [herokuaccount]
+3. [AWS]
 4. [GitCLI]
 
 create a new environment for the project
