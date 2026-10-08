@@ -1,0 +1,7 @@
+# Runtime dependencies. scikit-learn is pinned to the version model.pkl was
+# saved with (1.0.2); newer releases cannot unpickle its random forest.
+Flask==2.2.5
+gunicorn==22.0.0
+numpy==1.22.4
+pandas==1.4.4
+scikit-learn==1.0.2

@@ -1,0 +1,7 @@
+.git
+.github
+notebooks
+*.pdf
+dataset.csv
+__pycache__
+venv
