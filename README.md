@@ -1,6 +1,6 @@
 # Car Performance Tracking
 
-**Live demo:** <https://biggyatz.github.io/Car-performance-tracking/> (runs entirely in the browser, hosted on GitHub Pages)
+**Live demo:** <https://biggyatz.github.io/Car-performance-tracking/web/> (runs entirely in the browser, hosted on GitHub Pages)
 
 Predicts a car's fuel efficiency (**miles per gallon**) from its engine and
 body specs with a Random Forest regressor, served through a Flask web app.
@@ -31,7 +31,7 @@ Random Forest: R² = 0.854, MAE = 2.08 mpg.
 | `notebooks/Car_Performance_Prediction.ipynb` | EDA, model comparison, training |
 | `templates/finalweb.html` | Input form |
 | `dataset.csv` | Auto MPG data |
-| `web/`, `export_web_model.py` | Static in-browser version published to GitHub Pages |
+| `web/`, `export_web_model.py`, `index.html` | Static in-browser version served by GitHub Pages (root `index.html` redirects to `web/`) |
 | `Dockerfile`, `render.yaml`, `Procfile` | Deployment config |
 
 ## Run locally
@@ -57,8 +57,9 @@ docker run -p 8000:8000 car-performance   # http://localhost:8000
 
 `web/` is a static version of the app for GitHub Pages. `export_web_model.py` writes all 250 trees of the random forest to `web/model.json` (~320 KB gzipped), and `web/predict.js` walks them in the browser exactly as scikit-learn does, including its float32 input cast. Its predictions are identical to `model.predict` on every row of the dataset plus 300 random inputs.
 
-`.github/workflows/pages.yml` copies `web/` to the `gh-pages` branch on every
-push to `main`, and GitHub Pages serves it at <https://biggyatz.github.io/Car-performance-tracking/>. If you retrain and
+GitHub Pages builds this repository straight from `main`, so the app is
+served from `web/` at <https://biggyatz.github.io/Car-performance-tracking/web/>
+(the root `index.html` redirects there). Any push to `main` updates it. If you retrain and
 replace `model.pkl`, run `python export_web_model.py` and commit the new
 `web/model.json`.
 
