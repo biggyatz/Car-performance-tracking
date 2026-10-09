@@ -1,5 +1,7 @@
 # Car Performance Tracking
 
+**Live demo:** <https://biggyatz.github.io/Car-performance-tracking/> (runs entirely in the browser, hosted on GitHub Pages)
+
 Predicts a car's fuel efficiency (**miles per gallon**) from its engine and
 body specs with a Random Forest regressor, served through a Flask web app.
 Built during the SmartInternz applied data science internship.
@@ -29,6 +31,7 @@ Random Forest: R² = 0.854, MAE = 2.08 mpg.
 | `notebooks/Car_Performance_Prediction.ipynb` | EDA, model comparison, training |
 | `templates/finalweb.html` | Input form |
 | `dataset.csv` | Auto MPG data |
+| `web/`, `export_web_model.py` | Static in-browser version published to GitHub Pages |
 | `Dockerfile`, `render.yaml`, `Procfile` | Deployment config |
 
 ## Run locally
@@ -50,13 +53,20 @@ docker run -p 8000:8000 car-performance   # http://localhost:8000
 
 ## Deploy
 
-The original Heroku + GitHub Actions pipeline stopped working when Heroku
-dropped its free tier. It now deploys on **Render's free plan**:
+### GitHub Pages (live)
 
-1. Sign in at <https://dashboard.render.com> with GitHub.
-2. **New → Blueprint** → select this repository → **Apply**.
+`web/` is a static version of the app for GitHub Pages. `export_web_model.py` writes all 250 trees of the random forest to `web/model.json` (~320 KB gzipped), and `web/predict.js` walks them in the browser exactly as scikit-learn does, including its float32 input cast. Its predictions are identical to `model.predict` on every row of the dataset plus 300 random inputs.
 
-Free Render services sleep after 15 minutes idle (first request ~30–60 s).
+`.github/workflows/pages.yml` copies `web/` to the `gh-pages` branch on every
+push to `main`, and GitHub Pages serves it at <https://biggyatz.github.io/Car-performance-tracking/>. If you retrain and
+replace `model.pkl`, run `python export_web_model.py` and commit the new
+`web/model.json`.
+
+### Flask server (optional)
+
+The Flask app (`Dockerfile`, `render.yaml`) is still here for running the
+original server version, for example on Render: **New → Blueprint →** pick
+this repo **→ Apply**.
 
 ## Security note
 
