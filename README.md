@@ -1,76 +1,69 @@
-# Car Performance Tracking
+# Nepal Used Car Value Estimator
 
-**Live demo:** <https://biggyatz.github.io/Car-performance-tracking/web/> (runs entirely in the browser, hosted on GitHub Pages)
+**Live app:** <https://biggyatz.github.io/Car-performance-tracking/web/>
 
-Predicts a car's fuel efficiency (**miles per gallon**) from its engine and
-body specs with a Random Forest regressor, served through a Flask web app.
-Built during the SmartInternz applied data science internship.
+Estimate what a used car is worth in Nepal from **422 real listings** across **68 models**. Pick the make, model, year and (optionally) kilometres. You get an estimated market value with a likely range, today's showroom price for that model with the share of value retained, a value-by-year curve plotted against real asking prices, similar cars currently for sale, and Nepal's typical depreciation curve.
 
-| Model (test set) | RMSE |
-| --- | --- |
-| **Random Forest Regressor** (deployed) | **2.90** |
-| Multiple Linear Regression | 3.49 |
-| K-Neighbours Regressor | 4.43 |
-| Support Vector Regressor | 5.21 |
+The app is a static page on GitHub Pages: the model runs in the browser, with no server and no cost.
 
-Random Forest: R² = 0.854, MAE = 2.08 mpg.
+> This repository started as the SmartInternz car-performance (mpg) project. That original work, including the certificate, is preserved in [`legacy-auto-mpg/`](legacy-auto-mpg/).
 
-## Inputs
+## Data
 
-`cylinders`, `displacement` (cu in), `horsepower`, `weight` (lb),
-`acceleration` (0–60 s), `model year` (e.g. 70 for 1970), `origin`
-(1 = USA, 2 = Europe, 3 = Japan). Data: the classic Auto MPG dataset
-(`dataset.csv`).
+| Source | What | Count | How it was collected |
+| --- | --- | --- | --- |
+| [hamrobazaar.com](https://hamrobazaar.com) | Used-car asking prices | 422 after cleaning | Search and listing pages (`/search/product`, `/detail/`, allowed in `robots.txt`) |
+| [nepaldrives.com](https://www.nepaldrives.com) | New-car prices (2026 guides) | 128 models, 25 brands | Brand price pages (allowed in `robots.txt`) |
 
-## Project layout
+* Collected in October 2026, rate-limited.
+* Only car attributes are kept (title, price, make year, km, fuel or transmission keywords, URL); phone numbers and seller names are removed.
+* [EV News Nepal](https://evnewsnepal.com) asks for permission before bulk reuse, so its catalogue was not used.
+* Prices are **asking prices**, not dealer quotes or bank valuations.
+
+Cleaning (`data/clean_cars.py`):
+* Free-text titles are mapped to a make and model family with ordered patterns (Grand i10 before i10, Dzire before Swift, Nexon EV before Nexon).
+* Bikram Sambat model years (e.g. 2075) are converted to AD.
+* Rentals, parts and accessories are dropped, along with prices outside Rs 2 lakh – 3 crore.
+* Seller-chosen condition labels ("Brand new" on decade-old cars) proved unreliable and are ignored.
+
+## Model
+
+A regression on log(price) with ridge regularisation:
+
+`log(price) = make + model family + age + age² + log(km) + electric × age`
+
+Model families with at least 3 listings get their own effect, shrunk toward the make; rarer models fall back to the make. Listings more than ~2.5× off the fitted value are treated as data errors (one robust pass).
+
+| 5-fold cross-validation | Ridge (deployed) | Gradient boosting |
+| --- | --- | --- |
+| R² (log price) | 0.915 | 0.665 |
+| Median absolute error | 7.7% | 13.5% |
+| Within ±20% | 85.1% | 62.8% |
+
+`web/predict.js` reproduces the Python model exactly (max relative difference ~1e-15). Most-listed models: Hyundai i10 (37), Hyundai i20 (27), Hyundai Creta (24), Hyundai Santro (24), Suzuki Swift (23), Hyundai Grand i10 (22), Ford EcoSport (14), Hyundai Eon (11).
+
+## Repository layout
 
 | Path | What it is |
 | --- | --- |
-| `app.py` | Flask app: form (`/`), prediction (`/Result`), health check (`/health`) |
-| `model.pkl` | Trained `RandomForestRegressor` (scikit-learn 1.0.2) |
-| `notebooks/Car_Performance_Prediction.ipynb` | EDA, model comparison, training |
-| `templates/finalweb.html` | Input form |
-| `dataset.csv` | Auto MPG data |
-| `web/`, `export_web_model.py`, `index.html` | Static in-browser version served by GitHub Pages (root `index.html` redirects to `web/`) |
-| `Dockerfile`, `render.yaml`, `Procfile` | Deployment config |
+| `web/` | The app: `index.html`, `app.js`, `predict.js`, `style.css`, plus `model.json` and `listings.json` |
+| `index.html` | Redirects the Pages root to `web/` (this repo's Pages site builds from `main`) |
+| `data/crawl_hamrobazar*.js`, `data/crawl_nepaldrives.py` | Polite crawlers |
+| `data/clean_cars.py`, `data/nepal_units.py` | Title → model mapping, year/price parsing |
+| `data/train_car_model.py`, `data/export_car_web.py` | Training, cross-validation, export |
+| `data/car_listings.csv`, `data/new_car_prices.json` | Cleaned datasets |
+| `legacy-auto-mpg/` | The original SmartInternz mpg project (Flask, Docker, notebook, certificate) |
 
-## Run locally
-
-`model.pkl` was saved with scikit-learn 1.0.2, which needs **Python 3.10 or older**.
+## Refreshing the data
 
 ```bash
-python3.10 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python app.py                          # http://localhost:5000
+cd data
+node crawl_hamrobazar.js '/detail/cars/' raw_hamrobazar_cars.jsonl "hyundai i10" "suzuki swift" ...
+node crawl_hamrobazar_details.js raw_hamrobazar_cars.jsonl raw_hamrobazar_car_details.jsonl
+python crawl_nepaldrives.py
+python clean_cars.py && python train_car_model.py && python export_car_web.py ../web
 ```
-
-Or with Docker (handles the Python version for you):
-
-```bash
-docker build -t car-performance .
-docker run -p 8000:8000 car-performance   # http://localhost:8000
-```
-
-## Deploy
-
-### GitHub Pages (live)
-
-`web/` is a static version of the app for GitHub Pages. `export_web_model.py` writes all 250 trees of the random forest to `web/model.json` (~320 KB gzipped), and `web/predict.js` walks them in the browser exactly as scikit-learn does, including its float32 input cast. Its predictions are identical to `model.predict` on every row of the dataset plus 300 random inputs.
-
-GitHub Pages builds this repository straight from `main`, so the app is
-served from `web/` at <https://biggyatz.github.io/Car-performance-tracking/web/>
-(the root `index.html` redirects there). Any push to `main` updates it. If you retrain and
-replace `model.pkl`, run `python export_web_model.py` and commit the new
-`web/model.json`.
-
-### Flask server (optional)
-
-The Flask app (`Dockerfile`, `render.yaml`) is still here for running the
-original server version, for example on Render: **New → Blueprint →** pick
-this repo **→ Apply**.
 
 ## Security note
 
-An IBM Cloud API key (`apikey.json`) used to be committed to this repository.
-The file is removed and git-ignored, but it is still in the git history, so
-**revoke that key** in IBM Cloud → Manage → Access (IAM) → API keys.
+An IBM Cloud API key (`apikey.json`) was committed in this repository's early history. Revoke it in IBM Cloud → Manage → Access (IAM) → API keys.
