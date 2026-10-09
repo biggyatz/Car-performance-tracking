@@ -3,77 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Car Performance Predictor</title>
-<meta name="description" content="Predict a car's fuel efficiency (mpg) with a random forest that runs entirely in your browser.">
-<style>
-  :root { --bg:#f6f7f9; --card:#fff; --text:#1d2330; --muted:#5b6475; --accent:#1f6feb; --line:#dfe3ea; --ok:#e7f3ec; --okText:#155c33; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#12141a; --card:#1b1f27; --text:#e8eaf0; --muted:#a3abbb; --accent:#6ea8ff; --line:#2a303b; --ok:#16301f; --okText:#8fe0ad; } }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  main { max-width:880px; margin:0 auto; padding:40px 16px 56px; }
-  h1 { margin:0 0 6px; font-size:clamp(1.7rem,4vw,2.2rem); }
-  .lead { color:var(--muted); margin:0 0 24px; }
-  form { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
-  .grid { display:grid; gap:14px 18px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-  label { display:block; font-weight:600; font-size:.92rem; }
-  label small { display:block; font-weight:400; color:var(--muted); font-size:.82rem; margin-bottom:4px; }
-  input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; }
-  input:focus { outline:2px solid var(--accent); outline-offset:1px; }
-  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
-  button { padding:10px 18px; border-radius:8px; border:1px solid var(--accent); font:inherit; font-weight:600; cursor:pointer; }
-  button.primary { background:var(--accent); color:#fff; }
-  button.secondary { background:transparent; color:var(--accent); }
-  #result { margin-top:18px; padding:14px 16px; border-radius:10px; background:var(--ok); color:var(--okText); font-size:1.15rem; font-weight:600; }
-  #result[hidden] { display:none; }
-  footer { margin-top:28px; color:var(--muted); font-size:.9rem; }
-  footer a { color:var(--accent); }
-</style>
-<style> select { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:inherit; font:inherit; } </style>
+<title>Nepal Used Car Value Estimator</title>
+<meta name="description" content="Estimate the market value of a used car in Nepal from real listings, compare with today's new price, and see how fast it depreciates.">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main>
-  <h1>Car Performance Predictor</h1>
-  <p class="lead">Predicts a car's fuel efficiency in <strong>miles per gallon</strong> from its engine and body specs. A 250-tree random forest (test RMSE 2.9 mpg, R² 0.85) trained on the Auto MPG dataset. All 250 trees run entirely in your browser.</p>
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Automobiles · Nepal</p>
+    <h1>What is this car worth?</h1>
+    <p class="lead">Estimate the market value of a used car in Nepal from <span id="lead-n">hundreds of</span> real listings, compare it with today's showroom price, and see how quickly the model loses value.</p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
 
-  <form id="form" novalidate>
-    <div class="grid">
-      <label for="cylinders">Cylinders <small>Number of cylinders (3–8)</small><input id="cylinders" type="number" step="1" min="1" required></label>
-      <label for="displacement">Displacement <small>Engine displacement, cubic inches</small><input id="displacement" type="number" step="any" required></label>
-      <label for="horsepower">Horsepower <small>Engine power, hp</small><input id="horsepower" type="number" step="any" required></label>
-      <label for="weight">Weight <small>Vehicle weight, lb</small><input id="weight" type="number" step="any" required></label>
-      <label for="acceleration">Acceleration <small>Seconds from 0 to 60 mph</small><input id="acceleration" type="number" step="any" required></label>
-      <label for="model year">Model year <small>Two digits, e.g. 76 for 1976 (data covers 70–82)</small><input id="model year" type="number" step="1" required></label>
-      <label for="origin">Origin <small>Where the car was built</small><select id="origin" required><option value="1">USA</option><option value="2">Europe</option><option value="3">Japan</option></select></label>
-    </div>
-    <div class="actions">
-      <button type="submit" class="primary">Predict mpg</button>
-      <button type="button" class="secondary" id="example">Fill example</button>
-    </div>
-    <div id="result" role="status" aria-live="polite" hidden></div>
-  </form>
+<main class="wrap">
+  <div class="layout">
+    <section class="card" aria-labelledby="in-title">
+      <h2 id="in-title">Car details</h2>
+      <p class="sub">The estimate updates as you change anything.</p>
+      <label class="field"><span>Make</span><select id="make"></select></label>
+      <label class="field"><span>Model</span><select id="family"></select></label>
+      <div class="field"><span id="yr-l">Year of manufacture</span><div class="range-row"><input type="range" id="year" step="1" aria-labelledby="yr-l"><output id="year-o"></output></div></div>
+      <label class="field"><span>Kilometres driven <small style="font-weight:400;color:var(--muted)">(optional)</small></span><input type="number" id="km" min="0" step="1000" placeholder="e.g. 45000"></label>
+    </section>
 
-  <footer>Built during the SmartInternz applied data science internship · <a href="https://github.com/biggyatz/Car-performance-tracking">Source on GitHub</a></footer>
+    <section class="card" aria-labelledby="out-title">
+      <h2 id="out-title">Estimated market value</h2>
+      <div class="hero" aria-live="polite"><span class="big" id="price">–</span></div>
+      <div class="meta" id="meta"></div>
+      <div class="chart" id="range-chart"></div>
+      <h3 style="margin:18px 0 0;font-size:1rem">Value by year for this model</h3>
+      <p class="sub">Line: model estimate. Dots: real asking prices for this model.</p>
+      <div class="chart" id="curve-chart"></div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="comps-title">
+    <h2 id="comps-title">Similar cars for sale</h2>
+    <p class="sub" id="comps-sub">Closest listings by model and year.</p>
+    <div class="comps" id="comps"></div>
+  </section>
+
+  <section class="card" aria-labelledby="dep-title">
+    <div class="card-head">
+      <div>
+        <h2 id="dep-title">How fast cars lose value in Nepal</h2>
+        <p class="sub">Share of value kept by age, relative to a nearly new car, from the model fitted to every listing.</p>
+      </div>
+      <button class="ghost" data-table-toggle="dep">Show table</button>
+    </div>
+    <div class="legend" id="dep-legend"></div>
+    <div class="chart" id="dep-chart"></div>
+    <div class="table-view" id="dep-table" hidden></div>
+  </section>
+
+  <section class="card" aria-labelledby="about-title">
+    <h2 id="about-title">How this works</h2>
+    <p class="sub" id="about-text"></p>
+    <div class="stats-row" id="model-stats"></div>
+  </section>
 </main>
+
+<footer class="wrap foot">
+  <p id="sources"></p>
+  <p>Estimates reflect <strong>asking prices</strong> on the open market and are not a dealer quote or bank valuation. <a href="https://github.com/biggyatz/Car-performance-tracking">Source, data pipeline and methodology on GitHub</a></p>
+</footer>
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
 <script src="predict.js"></script>
-<script>
-  const EXAMPLE = { cylinders: 8, displacement: 307, horsepower: 130, weight: 3504, acceleration: 12, "model year": 70, origin: 1 };
-  document.getElementById("example").onclick = () => {
-    for (const [id, v] of Object.entries(EXAMPLE)) document.getElementById(id).value = v;
-  };
-  const modelReady = fetch("model.json").then(r => r.json());
-  const result = document.getElementById("result");
-  document.getElementById("form").onsubmit = async (e) => {
-    e.preventDefault();
-    result.hidden = false;
-    result.textContent = "Running 250 trees…";
-    const model = await modelReady;
-    const values = model.features.map(f => parseFloat(document.getElementById(f).value));
-    if (values.some(v => !Number.isFinite(v))) {
-      result.textContent = "Please enter a number in every field.";
-      return;
-    }
-    result.textContent = "Predicted fuel efficiency: " + predictMpg(model, values).toFixed(1) + " mpg";
-  };
-</script>
+<script src="app.js"></script>
 </body>
 </html>
