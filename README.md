@@ -1,6 +1,6 @@
 # Nepal Used Car Value Estimator
 
-**Live app:** <https://biggyatz.github.io/Car-performance-tracking/web/>
+**Live app:** <https://biggyatz.github.io/nepal-used-car-value-estimator/web/>
 
 Estimate what a used car is worth in Nepal from **422 real listings** across **68 models**. Pick the make, model, year and (optionally) kilometres. You get an estimated market value with a likely range, today's showroom price for that model with the share of value retained, a value-by-year curve plotted against real asking prices, similar cars currently for sale, and Nepal's typical depreciation curve.
 
